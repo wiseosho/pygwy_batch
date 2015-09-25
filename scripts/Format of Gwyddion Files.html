@@ -1,0 +1,416 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Format of Gwyddion Files</title><link rel="stylesheet" type="text/css" href="Format%20of%20Gwyddion%20Files_files/user-guide.css"><meta name="generator" content="DocBook XSL Stylesheets V1.78.1"><link rel="home" href="http://gwyddion.net/documentation/user-guide-en/index.html" title="Gwyddion user guide"><link rel="up" href="http://gwyddion.net/documentation/user-guide-en/summaries.html" title="Chapter&nbsp;5.&nbsp;Summaries and Tables"><link rel="prev" href="http://gwyddion.net/documentation/user-guide-en/toolbox-configuration.html" title="Toolbox Configuration"><link rel="next" href="http://gwyddion.net/documentation/user-guide-en/gsf.html" title="Simple Field Files"></head><body><div class="navheader"><table summary="Navigation header" width="100%"><tbody><tr><th colspan="3" align="center">Format of Gwyddion Files</th></tr><tr><td align="left" width="20%"><a accesskey="p" href="http://gwyddion.net/documentation/user-guide-en/toolbox-configuration.html">Prev</a>&nbsp;</td><th align="center" width="60%">Chapter&nbsp;5.&nbsp;Summaries and Tables</th><td align="right" width="20%">&nbsp;<a accesskey="n" href="http://gwyddion.net/documentation/user-guide-en/gsf.html">Next</a></td></tr></tbody></table></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="gwyfile-format"></a>Format of Gwyddion Files</h2></div></div></div><p>
+    A <span class="application">Gwyddion</span> native data file consists of
+    a tree-like structure of serialized objects.  Generally, these objects
+    can be of various kind and contain other embedded objects (hence the
+    tree-like structure).  It can be instructive to play with
+    <a class="ulink" href="http://gwyddion.net/gwydump.php" target="_top"><span class="command"><strong>gwydump</strong></span></a>,
+    a simple file structure visualizer available in on the project's web,
+    for a while and examine the contents of various files.
+  </p><p>
+    First of all, we will describe physical file structure without regard to
+    possible interpretation of contained data.
+  </p><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="gwyfile-byte-order"></a>Byte Order</h3></div></div></div><p>
+      All data is stored in little-endian (also known as LSB or Intel) byte
+      order.
+    </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="gwyfile-file-header"></a>File Header</h3></div></div></div><p>
+      The file header consists of four bytes (magic number) with the
+      values of ASCII characters <code class="literal">GWYP</code>.
+    </p><p>
+      This is the new file format, an older version of file format with magic
+      header <code class="literal">GWYO</code> also exists.  It will not be discussed
+      here.
+    </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="gwyfile-file-data"></a>File Data</h3></div></div></div><p>
+      The rest of the file consists of a serialized <span class="type">GwyContainer</span>
+      object that contains all the data.  It is stored exactly the same way
+      as any other object, that is as described in the next section.
+    </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="gwyfile-object-layout"></a>Object Layout</h3></div></div></div><p>
+      An object consists of three parts (in the following order):
+      </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">
+          Type name, stored as a <code class="constant">NUL</code>-terminated string of
+          ASCII characters.  This is the type name in GObject type system.
+        </li><li class="listitem">
+          Serialized data size, stored as an unsigned 32bit integer.  It does
+          not include the size of the type name and the size of self.
+        </li><li class="listitem">
+          Component list.  Components are named parts of object data, each of
+          particular data type: an atomic type, an array of atomic types, or
+          again an object.  They are stored in no particular order.
+        </li></ul></div><p>
+    </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="gwyfile-components"></a>Components</h3></div></div></div><p>
+      Each component consists of three parts (in the following order):
+      </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">
+          Name, stored as a <code class="constant">NUL</code>-terminated string.
+        </li><li class="listitem">
+          Type, stored as a single unsigned byte (character).  The table of
+          possible component types is presented below.
+        </li><li class="listitem">
+          Data, stored as whatever is appropriate for a particular type.
+        </li></ul></div><p>
+    </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="gwyfile-data-types"></a>Data Types</h3></div></div></div><p>
+      Available atomic data types are listed in following table:
+    </p><p>
+      </p><div class="informaltable"><a id="table-gwyfile-atomic-types"></a><table border="1"><colgroup><col><col><col></colgroup><thead><tr><th align="left">Type</th><th align="left">Character</th><th align="left">Note</th></tr></thead><tbody><tr><td align="left">boolean</td><td align="left"><code class="literal">b</code></td><td align="left">
+                Stored as a byte, zero is false, nonzero (normally 1) is true
+              </td></tr><tr><td align="left">character</td><td align="left"><code class="literal">c</code></td><td align="left">&nbsp;</td></tr><tr><td align="left">32bit integer</td><td align="left"><code class="literal">i</code></td><td align="left">&nbsp;</td></tr><tr><td align="left">64bit integer</td><td align="left"><code class="literal">q</code></td><td align="left">&nbsp;</td></tr><tr><td align="left">double</td><td align="left"><code class="literal">d</code></td><td align="left">
+                finite IEEE 754 double precision floating point number,
+                i.e. files must not contain infinities and not-a-numbers
+              </td></tr><tr><td align="left">string</td><td align="left"><code class="literal">s</code></td><td align="left">
+                <code class="constant">NUL</code>-terminated and UTF-8 encoded
+              </td></tr><tr><td align="left">object</td><td align="left"><code class="literal">o</code></td><td align="left">
+                Serialized object as described above
+              </td></tr></tbody></table></div><p>
+    </p><p>
+      Each atomic type except boolean has its array counterpart.  The type
+      character of array types is the same as of the corresponding atomic
+      type, except it is uppercase. Arrays are stored as unsigned 32bit array
+      length (the number of items), followed by the item values. Array data
+      types are listed in following table:
+    </p><p>
+      </p><div class="informaltable"><a id="table-gwyfile-array-types"></a><table border="1"><colgroup><col><col><col></colgroup><thead><tr><th align="left">Type</th><th align="left">Character</th><th align="left">Note</th></tr></thead><tbody><tr><td align="left">array of characters</td><td align="left"><code class="literal">C</code></td><td align="left">
+                Not <code class="constant">NUL</code>-terminated
+              </td></tr><tr><td align="left">array of 32bit integers</td><td align="left"><code class="literal">I</code></td><td align="left">&nbsp;</td></tr><tr><td align="left">array of 64bit integers</td><td align="left"><code class="literal">Q</code></td><td align="left">&nbsp;</td></tr><tr><td align="left">array of doubles</td><td align="left"><code class="literal">D</code></td><td align="left">&nbsp;</td></tr><tr><td align="left">array of strings</td><td align="left"><code class="literal">S</code></td><td align="left">&nbsp;</td></tr><tr><td align="left">array of objects</td><td align="left"><code class="literal">O</code></td><td align="left">Uppercase Oh, not zero</td></tr></tbody></table></div><p>
+    </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="gwyfile-top-level-container"></a>Top-Level <span class="type">GwyContainer</span></h3></div></div></div><p>
+      The names (keys) of data objects in a <span class="type">GwyContainer</span> representing a Gwyddion
+      file strongly resemble UNIX file names, i.e. they have the form of
+      <code class="literal">/</code>-separated paths and form a sort of tree-like structure.
+      For instance the title of the first channel, numbered&nbsp;0, is stored under the key
+      <code class="literal">/0/data/title</code>.  Note some data or information is found under keys
+      that do not seem logical; the reason is usually historical.
+    </p><p>
+      The following sections describe the organisation of interesting data and information
+      in the <span class="type">GwyContainer</span>.  The list is not necessarily complete.
+      However, since all data items in the file specify consistently their
+      name, type and size in bytes it is always possible to skip unknown data
+      types or data you are not interested in and extract only the desired data items.
+    </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="gwyfile-channels"></a>Channels</h3></div></div></div><p>
+      The following table summarises the common keys of channel-related data in
+      the top-level container for channel number&nbsp;0.  For other channels, the
+      number 0 has to be replaced with the corresponding channel number.  Note
+      that channels are often numbered sequentially, starting from&nbsp;0, however,
+      they can have any numbers and the set of channels numbers does not have
+      to be contiguous.
+    </p><p>
+      </p><div class="informaltable"><a id="table-gwyfile-channel-keys"></a><table border="1"><colgroup><col><col><col></colgroup><thead><tr><th align="left">Key</th><th align="left">Type</th><th align="left">Meaning</th></tr></thead><tbody><tr><td align="left"><code class="literal">/0/data</code></td><td align="left"><a class="link" href="http://gwyddion.net/documentation/user-guide-en/gwyfile-format.html#table-gwyfile-GwyDataField"><span class="type">GwyDataField</span></a></td><td align="left">
+                Channel data.
+              </td></tr><tr><td align="left"><code class="literal">/0/data/title</code></td><td align="left">string</td><td align="left">
+                Channel title, as shown in the data browser.
+              </td></tr><tr><td align="left"><code class="literal">/0/data/visible</code></td><td align="left">boolean</td><td align="left">
+                Whether the channel should be displayed in a window when the file is loaded.
+              </td></tr><tr><td align="left"><code class="literal">/0/data/realsquare</code></td><td align="left">boolean</td><td align="left">
+                Whether the channel should be displayed as
+                <span class="guilabel">Physically square</span> (as opposed to
+                <span class="guilabel">Pixelwise square</span>).
+              </td></tr><tr><td align="left"><code class="literal">/0/base/palette</code></td><td align="left">string</td><td align="left">
+                Name of the false color gradient used to display the channel.
+              </td></tr><tr><td align="left"><code class="literal">/0/base/range-type</code></td><td align="left">32bit integer</td><td align="left">
+                False color mapping type (as set by the
+                <a class="link" href="http://gwyddion.net/documentation/user-guide-en/color-map.html#color-range" title="Color Range Tool">Color range tool</a>), the value is from
+                <span class="type">GwyLayerBasicRangeType</span> enum.
+              </td></tr><tr><td align="left"><code class="literal">/0/base/min</code></td><td align="left">double</td><td align="left">
+                Minimum value for user-set display range.
+              </td></tr><tr><td align="left"><code class="literal">/0/base/max</code></td><td align="left">double</td><td align="left">
+                Maximum value for user-set display range.
+              </td></tr><tr><td align="left"><code class="literal">/0/mask</code></td><td align="left"><a class="link" href="http://gwyddion.net/documentation/user-guide-en/gwyfile-format.html#table-gwyfile-GwyDataField"><span class="type">GwyDataField</span></a></td><td align="left">
+                Mask data.  The pixel dimensions of this data field must match those
+                of the channel data.
+              </td></tr><tr><td align="left"><code class="literal">/0/mask/red</code></td><td align="left">double</td><td align="left">
+                Red component of the mask color.
+              </td></tr><tr><td align="left"><code class="literal">/0/mask/green</code></td><td align="left">double</td><td align="left">
+                Green component of the mask color.
+              </td></tr><tr><td align="left"><code class="literal">/0/mask/blue</code></td><td align="left">double</td><td align="left">
+                Blue component of the mask color.
+              </td></tr><tr><td align="left"><code class="literal">/0/mask/alpha</code></td><td align="left">double</td><td align="left">
+                Alpha (opacity) component of the mask color.
+              </td></tr><tr><td align="left"><code class="literal">/0/show</code></td><td align="left"><a class="link" href="http://gwyddion.net/documentation/user-guide-en/gwyfile-format.html#table-gwyfile-GwyDataField"><span class="type">GwyDataField</span></a></td><td align="left">
+                Presentation data.  The pixel dimensions of this data field must match those
+                of the channel data.
+              </td></tr><tr><td align="left"><code class="literal">/0/meta</code></td><td align="left"><span class="type">GwyContainer</span></td><td align="left">
+                Channel metadata.  The keys are directly the names as displayed in
+                the metadata browser and the string values are the values.
+              </td></tr><tr><td align="left"><code class="literal">/0/data/log</code></td><td align="left"><a class="link" href="http://gwyddion.net/documentation/user-guide-en/gwyfile-format.html#table-gwyfile-GwyStringList"><span class="type">GwyStringList</span></a></td><td align="left">
+                Channel log as a list of string log entries.  They have the format
+                <code class="literal"><em class="replaceable"><code>type</code></em>::<em class="replaceable"><code>function</code></em>(<em class="replaceable"><code>param</code></em>=<em class="replaceable"><code>value</code></em>, …)@<em class="replaceable"><code>time</code></em></code>.
+              </td></tr><tr><td align="left"><code class="literal">/0/select/<em class="replaceable"><code>foo</code></em></code></td><td align="left">a <span class="type">GwySelection</span> subclass</td><td align="left">
+                Selection data.  Each kind of selection has (usually) a different object
+                type and is stored under a different name; the specific name
+                <em class="replaceable"><code>foo</code></em> is the same as shown in the
+                <a class="link" href="http://gwyddion.net/documentation/user-guide-en/selections.html#selection-manager" title="Selection Manager">selection manager</a>.
+              </td></tr></tbody></table></div><p>
+    </p><p>
+      Channels are represented as <span class="type">GwyDataField</span> objects.  The components of
+      a <span class="type">GwyDataField</span> are summarised in the following table:
+    </p><p>
+      </p><div class="informaltable"><a id="table-gwyfile-GwyDataField"></a><table border="1"><colgroup><col><col><col></colgroup><thead><tr><th align="left">Component</th><th align="left">Type</th><th align="left">Meaning</th></tr></thead><tbody><tr><td align="left"><code class="literal">xres</code></td><td align="left">32bit integer</td><td align="left">
+                Horizontal size in pixels.
+              </td></tr><tr><td align="left"><code class="literal">yres</code></td><td align="left">32bit integer</td><td align="left">
+                Vertical size in pixels.
+              </td></tr><tr><td align="left"><code class="literal">xreal</code></td><td align="left">double</td><td align="left">
+                Horizontal dimension in physical units.
+              </td></tr><tr><td align="left"><code class="literal">yreal</code></td><td align="left">double</td><td align="left">
+                Vertical dimension in physical units.
+              </td></tr><tr><td align="left"><code class="literal">xoff</code></td><td align="left">double</td><td align="left">
+                Horizontal offset of the top-left corner in physical units.
+                It usually occurs only if non-zero.
+              </td></tr><tr><td align="left"><code class="literal">yoff</code></td><td align="left">double</td><td align="left">
+                Vertical offset of the top-left corner in physical units.
+                It usually occurs only if non-zero.
+              </td></tr><tr><td align="left"><code class="literal">si_unit_xy</code></td><td align="left"><a class="link" href="http://gwyddion.net/documentation/user-guide-en/gwyfile-format.html#table-gwyfile-GwySIUnit"><span class="type">GwySIUnit</span></a></td><td align="left">
+                Unit of lateral dimensions.
+              </td></tr><tr><td align="left"><code class="literal">si_unit_z</code></td><td align="left"><a class="link" href="http://gwyddion.net/documentation/user-guide-en/gwyfile-format.html#table-gwyfile-GwySIUnit"><span class="type">GwySIUnit</span></a></td><td align="left">
+                Unit of data values.
+              </td></tr><tr><td align="left"><code class="literal">data</code></td><td align="left">array of doubles</td><td align="left">
+                Field data, stored as a flat array of size
+                <code class="varname">xres</code>×<code class="varname">yres</code>,
+                from top to bottom and from left to right.
+              </td></tr></tbody></table></div><p>
+    </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="gwyfile-graphs"></a>Graphs</h3></div></div></div><p>
+      The following table summarises the common keys of graph-related data in the top-level
+      container for graph number&nbsp;1.  For other graphs, the number 1 has to be
+      replaced with the corresponding graph number.  Note that graphs are often
+      numbered sequentially, starting from&nbsp;1, however, they can have any
+      numbers positive and the set of graph numbers does not have to be
+      contiguous.  The number&nbsp;0 in the prefix of graph keys is a historical
+      relic that does not mean anything and it is always&nbsp;0.
+    </p><p>
+      </p><div class="informaltable"><a id="table-gwyfile-graph-keys"></a><table border="1"><colgroup><col><col><col></colgroup><thead><tr><th align="left">Key</th><th align="left">Type</th><th align="left">Meaning</th></tr></thead><tbody><tr><td align="left"><code class="literal">/0/graph/graph/1</code></td><td align="left"><a class="link" href="http://gwyddion.net/documentation/user-guide-en/gwyfile-format.html#table-gwyfile-GwyGraphModel"><span class="type">GwyGraphModel</span></a></td><td align="left">
+                Graph model object data.
+              </td></tr><tr><td align="left"><code class="literal">/0/graph/graph/1/visible</code></td><td align="left">boolean</td><td align="left">
+                Whether the graph should be displayed in a window when the file is loaded.
+              </td></tr></tbody></table></div><p>
+    </p><p>
+      Graphs are represented as <span class="type">GwyGraphModel</span> objects.  The components of
+      a <span class="type">GwyGraphModel</span> are summarised in the following table:
+    </p><p>
+      </p><div class="informaltable"><a id="table-gwyfile-GwyGraphModel"></a><table border="1"><colgroup><col><col><col></colgroup><thead><tr><th align="left">Component</th><th align="left">Type</th><th align="left">Meaning</th></tr></thead><tbody><tr><td align="left"><code class="literal">curves</code></td><td align="left">array of <a class="link" href="http://gwyddion.net/documentation/user-guide-en/gwyfile-format.html#table-gwyfile-GwyGraphCurveModel"><span class="type">GwyGraphCurveModel</span></a>s</td><td align="left">
+                Individual graph curves.
+              </td></tr><tr><td align="left"><code class="literal">title</code></td><td align="left">string</td><td align="left">
+                Graph title as displayed in the data browser.
+              </td></tr><tr><td align="left"><code class="literal">x_unit</code></td><td align="left"><a class="link" href="http://gwyddion.net/documentation/user-guide-en/gwyfile-format.html#table-gwyfile-GwySIUnit"><span class="type">GwySIUnit</span></a></td><td align="left">
+                Unit of the abscissa.
+              </td></tr><tr><td align="left"><code class="literal">y_unit</code></td><td align="left"><a class="link" href="http://gwyddion.net/documentation/user-guide-en/gwyfile-format.html#table-gwyfile-GwySIUnit"><span class="type">GwySIUnit</span></a></td><td align="left">
+                Unit of the ordinate.
+              </td></tr><tr><td align="left"><code class="literal">top_label</code></td><td align="left">string</td><td align="left">
+                Label on the top axis.
+              </td></tr><tr><td align="left"><code class="literal">bottom_label</code></td><td align="left">string</td><td align="left">
+                Label on the bottom axis.
+              </td></tr><tr><td align="left"><code class="literal">left_label</code></td><td align="left">string</td><td align="left">
+                Label on the left axis.
+              </td></tr><tr><td align="left"><code class="literal">right_label</code></td><td align="left">string</td><td align="left">
+                Label on the right axis.
+              </td></tr><tr><td align="left"><code class="literal">x_is_logarithmic</code></td><td align="left">boolean</td><td align="left">
+                Whether the abscissa has a logarithmic scale.
+              </td></tr><tr><td align="left"><code class="literal">y_is_logarithmic</code></td><td align="left">boolean</td><td align="left">
+                Whether the ordinate has a logarithmic scale.
+              </td></tr><tr><td align="left"><code class="literal">x_min</code></td><td align="left">double</td><td align="left">
+                User-set minimum value of the abscissa.
+              </td></tr><tr><td align="left"><code class="literal">x_min_set</code></td><td align="left">boolean</td><td align="left">
+                Whether user-set minimum value of the abscissa should be used (otherwise
+                the range is determined automatically).
+              </td></tr><tr><td align="left"><code class="literal">x_max</code></td><td align="left">double</td><td align="left">
+                User-set maximum value of the abscissa.
+              </td></tr><tr><td align="left"><code class="literal">x_max_set</code></td><td align="left">boolean</td><td align="left">
+                Whether user-set maximum value of the abscissa should be used (otherwise
+                the range is determined automatically).
+              </td></tr><tr><td align="left"><code class="literal">y_min</code></td><td align="left">double</td><td align="left">
+                User-set minimum value of the ordinate.
+              </td></tr><tr><td align="left"><code class="literal">y_min_set</code></td><td align="left">boolean</td><td align="left">
+                Whether user-set minimum value of the ordinate should be used (otherwise
+                the range is determined automatically).
+              </td></tr><tr><td align="left"><code class="literal">y_max</code></td><td align="left">double</td><td align="left">
+                User-set maximum value of the ordinate.
+              </td></tr><tr><td align="left"><code class="literal">y_max_set</code></td><td align="left">boolean</td><td align="left">
+                Whether user-set maximum value of the ordinate should be used (otherwise
+                the range is determined automatically).
+              </td></tr><tr><td align="left"><code class="literal">grid-type</code></td><td align="left">32bit integer</td><td align="left">
+                Type of grid shown.
+                The value is from <span class="type">GwyGraphGridType</span> enum.
+              </td></tr><tr><td align="left"><code class="literal">label.has_frame</code></td><td align="left">boolean</td><td align="left">
+                Whether the graph key has a frame.
+              </td></tr><tr><td align="left"><code class="literal">label.frame_thickness</code></td><td align="left">32bit integer</td><td align="left">
+                Width of graph key frame.
+              </td></tr><tr><td align="left"><code class="literal">label.reverse</code></td><td align="left">boolean</td><td align="left">
+                Whether to reverse the graph key.
+              </td></tr><tr><td align="left"><code class="literal">label.visible</code></td><td align="left">boolean</td><td align="left">
+                Whether the graph key is visible.
+              </td></tr><tr><td align="left"><code class="literal">label.position</code></td><td align="left">32bit integer</td><td align="left">
+                The position (corner) where the graph key is places.
+                The value is from <span class="type">GwyGraphLabelPosition</span> enum.
+              </td></tr></tbody></table></div><p>
+    </p><p>
+      Graph curves are represented as <span class="type">GwyGraphCurveModel</span> objects.
+      The components of a <span class="type">GwyGraphCurveModel</span> are summarised in the
+      following table:
+    </p><p>
+      </p><div class="informaltable"><a id="table-gwyfile-GwyGraphCurveModel"></a><table border="1"><colgroup><col><col><col></colgroup><thead><tr><th align="left">Component</th><th align="left">Type</th><th align="left">Meaning</th></tr></thead><tbody><tr><td align="left"><code class="literal">xdata</code></td><td align="left">array of doubles</td><td align="left">
+                Abscissa points.  The number of points must match <code class="literal">ydata</code>.
+              </td></tr><tr><td align="left"><code class="literal">ydata</code></td><td align="left">array of doubles</td><td align="left">
+                Ordinate points.  The number of points must match <code class="literal">xdata</code>.
+              </td></tr><tr><td align="left"><code class="literal">description</code></td><td align="left">string</td><td align="left">
+                Curve description (name).
+              </td></tr><tr><td align="left"><code class="literal">type</code></td><td align="left">32bit integer</td><td align="left">
+                Curve mode (points, lines, etc.)
+                The value is from <span class="type">GwyGraphCurveType</span> enum.
+              </td></tr><tr><td align="left"><code class="literal">color.red</code></td><td align="left">double</td><td align="left">
+                Red component of the curve color.
+              </td></tr><tr><td align="left"><code class="literal">color.green</code></td><td align="left">double</td><td align="left">
+                Green component of the curve color.
+              </td></tr><tr><td align="left"><code class="literal">color.blue</code></td><td align="left">double</td><td align="left">
+                Blue component of the curve color.
+              </td></tr><tr><td align="left"><code class="literal">point_type</code></td><td align="left">32bit integer</td><td align="left">
+                Type of symbols representing data points.
+                The value is from <span class="type">GwyGraphPointType</span> enum.
+              </td></tr><tr><td align="left"><code class="literal">point_size</code></td><td align="left">32bit integer</td><td align="left">
+                Size of symbols representing data points.
+              </td></tr><tr><td align="left"><code class="literal">line_type</code></td><td align="left">32bit integer</td><td align="left">
+                Type of lines connecting data points.
+                The value is from <span class="type">GwyGraphLineType</span> enum.
+              </td></tr><tr><td align="left"><code class="literal">line_size</code></td><td align="left">32bit integer</td><td align="left">
+                Width of lines connecting data points.
+              </td></tr></tbody></table></div><p>
+    </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="gwyfile-spectra"></a>Spectra</h3></div></div></div><p>
+      The following table summarises the common keys of spectra-related data in
+      the top-level container for spectra set number&nbsp;0.  For other spectra, the
+      number 0 has to be replaced with the corresponding spectra set number.  Note
+      that spectra sets are often numbered sequentially, starting from&nbsp;0, however,
+      they can have any numbers and the set of spectra set numbers does not have
+      to be contiguous.
+    </p><p>
+      </p><div class="informaltable"><a id="table-gwyfile-spectra-keys"></a><table border="1"><colgroup><col><col><col></colgroup><thead><tr><th align="left">Key</th><th align="left">Type</th><th align="left">Meaning</th></tr></thead><tbody><tr><td align="left"><code class="literal">/sps/0</code></td><td align="left"><a class="link" href="http://gwyddion.net/documentation/user-guide-en/gwyfile-format.html#table-gwyfile-GwySpectra"><span class="type">GwySpectra</span></a></td><td align="left">
+                Spectra data.
+              </td></tr></tbody></table></div><p>
+    </p><p>
+      Sets of spectra of one kind are represented as <span class="type">GwySpectra</span> objects.
+      The components of a <span class="type">GwySpectra</span> are summarised in the following table:
+    </p><p>
+      </p><div class="informaltable"><a id="table-gwyfile-GwySpectra"></a><table border="1"><colgroup><col><col><col></colgroup><thead><tr><th align="left">Component</th><th align="left">Type</th><th align="left">Meaning</th></tr></thead><tbody><tr><td align="left"><code class="literal">title</code></td><td align="left">string</td><td align="left">
+                Spectra title as displayed in the data browser.
+              </td></tr><tr><td align="left"><code class="literal">si_unit_xy</code></td><td align="left"><a class="link" href="http://gwyddion.net/documentation/user-guide-en/gwyfile-format.html#table-gwyfile-GwySIUnit"><span class="type">GwySIUnit</span></a></td><td align="left">
+                Unit of spectrum position coordinates.
+              </td></tr><tr><td align="left"><code class="literal">coords</code></td><td align="left">array of doubles</td><td align="left">
+                Coordinates of points where the spectra were taken, in physical units.
+                Each spectrum takes two items: for the horizontal and vertical coordinate.
+                The number of coordinates must match the number of curves in
+                <code class="varname">data</code>.
+              </td></tr><tr><td align="left"><code class="literal">data</code></td><td align="left">array of <a class="link" href="http://gwyddion.net/documentation/user-guide-en/gwyfile-format.html#table-gwyfile-GwyDataLine"><span class="type">GwyDataLine</span></a>s</td><td align="left">
+                Individual spectra curves.
+              </td></tr><tr><td align="left"><code class="literal">selected</code></td><td align="left">array of 32bit integers</td><td align="left">
+                Indices of selected spectra curves.
+              </td></tr></tbody></table></div><p>
+    </p><p>
+      Individual curves in spectra are represented as <span class="type">GwyDataLine</span> objects.
+      The components of a <span class="type">GwyDataLine</span> are summarised in the following table:
+    </p><p>
+      </p><div class="informaltable"><a id="table-gwyfile-GwyDataLine"></a><table border="1"><colgroup><col><col><col></colgroup><thead><tr><th align="left">Component</th><th align="left">Type</th><th align="left">Meaning</th></tr></thead><tbody><tr><td align="left"><code class="literal">res</code></td><td align="left">32bit integer</td><td align="left">
+                Number of data points.
+              </td></tr><tr><td align="left"><code class="literal">real</code></td><td align="left">double</td><td align="left">
+                Length in physical units.
+              </td></tr><tr><td align="left"><code class="literal">off</code></td><td align="left">double</td><td align="left">
+                Offset of the begining in physical units.
+                It usually occurs only if non-zero.
+              </td></tr><tr><td align="left"><code class="literal">si_unit_x</code></td><td align="left"><a class="link" href="http://gwyddion.net/documentation/user-guide-en/gwyfile-format.html#table-gwyfile-GwySIUnit"><span class="type">GwySIUnit</span></a></td><td align="left">
+                Unit of abscissa.
+              </td></tr><tr><td align="left"><code class="literal">si_unit_y</code></td><td align="left"><a class="link" href="http://gwyddion.net/documentation/user-guide-en/gwyfile-format.html#table-gwyfile-GwySIUnit"><span class="type">GwySIUnit</span></a></td><td align="left">
+                Unit of data values.
+              </td></tr><tr><td align="left"><code class="literal">data</code></td><td align="left">array of doubles</td><td align="left">
+                Line data, stored as an array of <code class="varname">res</code>,
+                from left to right.
+              </td></tr></tbody></table></div><p>
+    </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="gwyfile-volume"></a>Volume data</h3></div></div></div><p>
+      The following table summarises the common keys of volume-related data in
+      the top-level container for volume data number&nbsp;0.  For other volume data, the
+      number 0 has to be replaced with the corresponding volume data number.  Note
+      that volume data are often numbered sequentially, starting from&nbsp;0, however,
+      they can have any numbers and the set of volume data numbers does not have
+      to be contiguous.
+    </p><p>
+      </p><div class="informaltable"><a id="table-gwyfile-volume-keys"></a><table border="1"><colgroup><col><col><col></colgroup><thead><tr><th align="left">Key</th><th align="left">Type</th><th align="left">Meaning</th></tr></thead><tbody><tr><td align="left"><code class="literal">/brick/0</code></td><td align="left"><a class="link" href="http://gwyddion.net/documentation/user-guide-en/gwyfile-format.html#table-gwyfile-GwyBrick"><span class="type">GwyBrick</span></a></td><td align="left">
+                Volume data.
+              </td></tr><tr><td align="left"><code class="literal">/brick/0/preview</code></td><td align="left"><a class="link" href="http://gwyddion.net/documentation/user-guide-en/gwyfile-format.html#table-gwyfile-GwyDataField"><span class="type">GwyDataField</span></a></td><td align="left">
+                Two-dimensional data shown when the volume data is
+                displayed in a window.
+              </td></tr><tr><td align="left"><code class="literal">/brick/0/title</code></td><td align="left">string</td><td align="left">
+                Volume data title, as shown in the data browser.
+              </td></tr><tr><td align="left"><code class="literal">/brick/0/visible</code></td><td align="left">boolean</td><td align="left">
+                Whether the volume data should be displayed in a window when the file is loaded.
+              </td></tr><tr><td align="left"><code class="literal">/brick/0/preview/palette</code></td><td align="left">string</td><td align="left">
+                Name of the false color gradient used to display the preview data.
+              </td></tr><tr><td align="left"><code class="literal">/brick/0/meta</code></td><td align="left"><span class="type">GwyContainer</span></td><td align="left">
+                Volume data metadata.  The keys are directly the names as displayed in
+                the metadata browser and the string values are the values.
+              </td></tr><tr><td align="left"><code class="literal">/brick/0/log</code></td><td align="left"><a class="link" href="http://gwyddion.net/documentation/user-guide-en/gwyfile-format.html#table-gwyfile-GwyStringList"><span class="type">GwyStringList</span></a></td><td align="left">
+                Volume data log as a list of string log entries.  They have the format
+                <code class="literal"><em class="replaceable"><code>type</code></em>::<em class="replaceable"><code>function</code></em>(<em class="replaceable"><code>param</code></em>=<em class="replaceable"><code>value</code></em>, …)@<em class="replaceable"><code>time</code></em></code>.
+              </td></tr></tbody></table></div><p>
+    </p><p>
+      Volume data are represented as <span class="type">GwyBrick</span> objects.  The components of
+      a <span class="type">GwyBrick</span> are summarised in the following table:
+    </p><p>
+      </p><div class="informaltable"><a id="table-gwyfile-GwyBrick"></a><table border="1"><colgroup><col><col><col></colgroup><thead><tr><th align="left">Component</th><th align="left">Type</th><th align="left">Meaning</th></tr></thead><tbody><tr><td align="left"><code class="literal">xres</code></td><td align="left">32bit integer</td><td align="left">
+                Horizontal size in pixels.
+              </td></tr><tr><td align="left"><code class="literal">yres</code></td><td align="left">32bit integer</td><td align="left">
+                Vertical size in pixels.
+              </td></tr><tr><td align="left"><code class="literal">zres</code></td><td align="left">32bit integer</td><td align="left">
+                Depth (number of levels) in pixels.
+              </td></tr><tr><td align="left"><code class="literal">xreal</code></td><td align="left">double</td><td align="left">
+                Horizontal dimension in physical units.
+              </td></tr><tr><td align="left"><code class="literal">yreal</code></td><td align="left">double</td><td align="left">
+                Vertical dimension in physical units.
+              </td></tr><tr><td align="left"><code class="literal">zreal</code></td><td align="left">double</td><td align="left">
+                Depthwise dimension in physical units.
+              </td></tr><tr><td align="left"><code class="literal">xoff</code></td><td align="left">double</td><td align="left">
+                Horizontal offset of the top-left corner in physical units.
+                It usually occurs only if non-zero.
+              </td></tr><tr><td align="left"><code class="literal">yoff</code></td><td align="left">double</td><td align="left">
+                Vertical offset of the top-left corner in physical units.
+                It usually occurs only if non-zero.
+              </td></tr><tr><td align="left"><code class="literal">zoff</code></td><td align="left">double</td><td align="left">
+                Depthwise offset of the top-left corner in physical units.
+                It usually occurs only if non-zero.
+              </td></tr><tr><td align="left"><code class="literal">si_unit_x</code></td><td align="left"><a class="link" href="http://gwyddion.net/documentation/user-guide-en/gwyfile-format.html#table-gwyfile-GwySIUnit"><span class="type">GwySIUnit</span></a></td><td align="left">
+                Unit of horizontal lateral dimensions.
+              </td></tr><tr><td align="left"><code class="literal">si_unit_y</code></td><td align="left"><a class="link" href="http://gwyddion.net/documentation/user-guide-en/gwyfile-format.html#table-gwyfile-GwySIUnit"><span class="type">GwySIUnit</span></a></td><td align="left">
+                Unit of vertical lateral dimensions.
+              </td></tr><tr><td align="left"><code class="literal">si_unit_z</code></td><td align="left"><a class="link" href="http://gwyddion.net/documentation/user-guide-en/gwyfile-format.html#table-gwyfile-GwySIUnit"><span class="type">GwySIUnit</span></a></td><td align="left">
+                Unit of depthwise dimensions.
+              </td></tr><tr><td align="left"><code class="literal">si_unit_w</code></td><td align="left"><a class="link" href="http://gwyddion.net/documentation/user-guide-en/gwyfile-format.html#table-gwyfile-GwySIUnit"><span class="type">GwySIUnit</span></a></td><td align="left">
+                Unit of data values.
+              </td></tr><tr><td align="left"><code class="literal">data</code></td><td align="left">array of doubles</td><td align="left">
+                Field data, stored as a flat array of size
+                <code class="varname">xres</code>×<code class="varname">yres</code>×<code class="varname">zres</code>,
+                from the zeroth to the last plane, top to bottom and from left to right.
+              </td></tr><tr><td align="left"><code class="literal">calibration</code></td><td align="left"><a class="link" href="http://gwyddion.net/documentation/user-guide-en/gwyfile-format.html#table-gwyfile-GwyDataLine"><span class="type">GwyDataLine</span></a></td><td align="left">
+                Calibration of the <span class="mathphrase"><span class="mathvar">z</span></span> axis to
+                represent non-linear sampling in this dimension.
+                The number of points must be equal to <code class="varname">zres</code>.
+                This component is present only if non-linear sampling is
+                used.
+              </td></tr></tbody></table></div><p>
+    </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="gwyfile-auxiliary-objects"></a>Auxiliary Objects</h3></div></div></div><p>
+      The components of a <span class="type">GwySIUnit</span> are summarised in the following table:
+    </p><p>
+      </p><div class="informaltable"><a id="table-gwyfile-GwySIUnit"></a><table border="1"><colgroup><col><col><col></colgroup><thead><tr><th align="left">Component</th><th align="left">Type</th><th align="left">Meaning</th></tr></thead><tbody><tr><td align="left"><code class="literal">unitstr</code></td><td align="left">string</td><td align="left">
+                Textual representation of the unit, e.g. <code class="literal">"A"</code>
+                or <code class="literal">"m^-1"</code> (as base SI unit, prefixes are ignored).
+              </td></tr></tbody></table></div><p>
+    </p><p>
+      The components of a <span class="type">GwySelection</span> are summarised in the following table.
+      Some selection types can have other data members; refer to the documentation of
+      specific selection classes for how to interpret the data.
+    </p><p>
+      </p><div class="informaltable"><a id="table-gwyfile-GwySelection"></a><table border="1"><colgroup><col><col><col></colgroup><thead><tr><th align="left">Component</th><th align="left">Type</th><th align="left">Meaning</th></tr></thead><tbody><tr><td align="left"><code class="literal">max</code></td><td align="left">32bit integer</td><td align="left">
+                Maximum number of objects the selection can hold (this is the number
+                set by <code class="function">gwy_selection_set_max_objects()</code>).
+              </td></tr><tr><td align="left"><code class="literal">data</code></td><td align="left">array of doubles</td><td align="left">
+                Selection data.  The number of items that form one selection object is
+                determined by the selection type.
+              </td></tr></tbody></table></div><p>
+    </p><p>
+      The components of a <span class="type">GwyStringList</span> are summarised in the following table.
+      Note if <span class="type">GwyStringList</span>s are used to represent logs, the strings have a
+      specific structure described above.
+    </p><p>
+      </p><div class="informaltable"><a id="table-gwyfile-GwyStringList"></a><table border="1"><colgroup><col><col><col></colgroup><thead><tr><th align="left">Component</th><th align="left">Type</th><th align="left">Meaning</th></tr></thead><tbody><tr><td align="left"><code class="literal">strings</code></td><td align="left">array of strings</td><td align="left">
+                List of string items.
+              </td></tr></tbody></table></div><p>
+    </p></div></div><div class="navfooter"><table summary="Navigation footer" width="100%"><tbody><tr><td align="left" width="40%"><a accesskey="p" href="http://gwyddion.net/documentation/user-guide-en/toolbox-configuration.html">Prev</a>&nbsp;</td><td align="center" width="20%"><a accesskey="u" href="http://gwyddion.net/documentation/user-guide-en/summaries.html">Up</a></td><td align="right" width="40%">&nbsp;<a accesskey="n" href="http://gwyddion.net/documentation/user-guide-en/gsf.html">Next</a></td></tr><tr><td align="left" valign="top" width="40%">Toolbox Configuration&nbsp;</td><td align="center" width="20%"><a accesskey="h" href="http://gwyddion.net/documentation/user-guide-en/index.html">Home</a></td><td align="right" valign="top" width="40%">&nbsp;Simple Field Files</td></tr></tbody></table></div></body></html>
