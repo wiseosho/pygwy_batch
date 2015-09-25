@@ -9,7 +9,7 @@ Created on Tue Sep 15 20:58:12 2015
 
 import gwy
 
-plugin_menu = "/Correct Data/Invert"
+plugin_menu = "/Correct Data/Invertss"
 plugin_type = "PROCESS"
 
 def run():
