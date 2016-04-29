@@ -5,18 +5,16 @@ from os.path import isfile, join, isdir
 import os, datetime
 import re, shutil, imp
 import numpy as np
-if not '/home/june/.gwyddion/pygwy/scripts' in sys.path:
-	sys.path.append('/home/june/.gwyddion/pygwy/scripts')
+if not '/home/june/.gwyddion/pygwy/custlib' in sys.path:
+	sys.path.append('/home/june/.gwyddion/pygwy/custlib')
 import Fct_gwyfunctions as custgwy
 imp.reload(custgwy)
 #ratio for color range
 ratio = (0.05, 0.99)
 
-pngexp = '/home/june/Dropbox/AFMImages'
-cwd = '/home/june/LabServer/24HC/Images/SS-Canvas/SSC(T)/151108'
-root = '/home/june/LabServer/24HC/Images/SS-Canvas/SSC(T)/151108'
-cwd = '/home/june/LabServer/08JY/Exp.Data/sscanvas-GB/origami-1/20140511'
-root = '/home/june/LabServer/08JY/Exp.Data/sscanvas-GB/origami-1/20140511'
+pngexp = '~/AFMImages'
+cwd = '~/RawAFMImages'
+root = '~/RawAFMImages'
 def runbatch(root, cwd, pdr, pngexp, ratio):
     print(cwd)
     # Export PNG with scalebar
