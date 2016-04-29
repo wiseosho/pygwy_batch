@@ -12,9 +12,9 @@ imp.reload(custgwy)
 #ratio for color range
 ratio = (0.05, 0.99)
 
-pngexp = '~/AFMImages'
-cwd = '~/RawAFMImages'
-root = '~/RawAFMImages'
+pngexp = '/home/june/AFMImages'
+cwd = '/home/june/RawAFMImages'
+root = '/home/june/RawAFMImages'
 def runbatch(root, cwd, pdr, pngexp, ratio):
     print(cwd)
     # Export PNG with scalebar
